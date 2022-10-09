@@ -1,16 +1,23 @@
 (function ( $ ) {
-    
-    
-
     function GetSearchOptions(composedString, dataStructure) {
       var parts = composedString.split('.');
 
       var nextObj = dataStructure;
       for (let index = 0; index < parts.length - 1; index++) {
         nextObj = nextObj[parts[index]];
+        if(nextObj === undefined) return [];
       }
-
       return Array.isArray(nextObj) ? nextObj : Object.keys(nextObj);
+    }
+
+    function ExtractStructureFromInput(inputElement){
+        var beforeDot = inputElement.value.substr(0, inputElement.selectionStart);
+        var beforeDotArr = beforeDot.split(' ');
+        var composedString = beforeDotArr[beforeDotArr.length - 1];
+
+        var parts = composedString.split('.');
+        var searchString = parts[parts.length - 1];
+        return [composedString, searchString];
     }
 
     $.fn.completejs = function(options) {
@@ -19,17 +26,11 @@
         this.autocomplete({
             minLength: 0,
             source: function( request, response ) {
-                var beforeDot = request.term.substr(0, targetInput.selectionStart);
-                var beforeDotArr = beforeDot.split(' ');
-                var composedString = beforeDotArr[beforeDotArr.length - 1];
-
-                var parts = composedString.split('.');
-                var searchString = parts[parts.length - 1];
+                var [composedString, searchString] = ExtractStructureFromInput(targetInput);
 
                 if(searchString !== ""){
                     completePosition = getCursorXY(targetInput, targetInput.selectionStart).x;
                 }
-                console.log(searchString);
               // delegate back to autocomplete, but extract the last term
               response( $.ui.autocomplete.filter(
                 GetSearchOptions(composedString, options.structure), searchString ) );
@@ -39,18 +40,13 @@
               return false;
             },
             select: function( event, ui ) {
-              var beforeDot = this.value.substr(0, targetInput.selectionStart);
-              var beforeDotArr = beforeDot.split(' ');
-              var composedString = beforeDotArr[beforeDotArr.length - 1];
-
-              var parts = composedString.split('.');
-              var searchString = parts[parts.length - 1];
+                var [_, searchString] = ExtractStructureFromInput(targetInput);
               
-              var restOfTheString = this.value.substr(targetInput.selectionStart);
-              var firstPartOfTheString = this.value.substr(0, targetInput.selectionStart - searchString.length);
+                var restOfTheString = this.value.substr(targetInput.selectionStart);
+                var firstPartOfTheString = this.value.substr(0, targetInput.selectionStart - searchString.length);
 
-              this.value = firstPartOfTheString + ui.item.value + restOfTheString;
-              return false;
+                this.value = firstPartOfTheString + ui.item.value + restOfTheString;
+                return false;
             },
             open: function(event, ui) {
                 var autocomplete = $(".ui-autocomplete");
