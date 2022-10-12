@@ -11,7 +11,8 @@
     }
 
     function ExtractStructureFromInput(inputElement){
-        var beforeDot = inputElement.value.substr(0, inputElement.selectionStart);
+        var inputValue = inputElement.value.replaceAll('\n', ' ').replaceAll('\t', ' ');
+        var beforeDot = inputValue.substr(0, inputElement.selectionStart);
         var beforeDotArr = beforeDot.split(' ');
         var composedString = beforeDotArr[beforeDotArr.length - 1];
 
@@ -22,15 +23,19 @@
 
     $.fn.completejs = function(options) {
         var targetInput = this[0];
-        var completePosition;
+        var cursorPosition;
         this.autocomplete({
             minLength: 0,
             source: function( request, response ) {
                 var [composedString, searchString] = ExtractStructureFromInput(targetInput);
 
-                if(searchString !== ""){
-                    completePosition = getCursorXY(targetInput, targetInput.selectionStart).x;
+                console.log(composedString);
+                console.log(searchString);
+
+                if(searchString === ""){
+                    cursorPosition = getCursorXY(targetInput, targetInput.selectionStart);
                 }
+
               // delegate back to autocomplete, but extract the last term
               response( $.ui.autocomplete.filter(
                 GetSearchOptions(composedString, options.structure), searchString ) );
@@ -51,7 +56,9 @@
             open: function(event, ui) {
                 var autocomplete = $(".ui-autocomplete");
                 
-                autocomplete.css("left", completePosition);
+                autocomplete.css("top", `calc(${cursorPosition.y}px + ${autocomplete.css('fontSize')})`);
+                autocomplete.css("left", cursorPosition.x);
+                autocomplete.css("width", 'auto');
             }
           });
     };
