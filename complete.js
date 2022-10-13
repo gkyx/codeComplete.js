@@ -51,6 +51,7 @@
                 var firstPartOfTheString = this.value.substr(0, targetInput.selectionStart - searchString.length);
 
                 this.value = firstPartOfTheString + ui.item.value + restOfTheString;
+                this.selectionEnd = firstPartOfTheString.length + ui.item.value.length;
                 return false;
             },
             open: function(event, ui) {
