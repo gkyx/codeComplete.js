@@ -30,9 +30,13 @@
 			autoFocus: true,
 			source: function( request, response ) {
 				var [composedString, searchString] = ExtractStructureFromInput(targetInput);
+				if(composedString === "") {
+					$(targetInput).autocomplete("close");
+					return;
+				} // Avoid showing the suggested values if no character is entered yet. Close the dropdown if it was already opened.
 
 				cursorPosition = getCursorXY(targetInput, targetInput.selectionStart - searchString.length);
-
+				
 				// delegate back to autocomplete, but extract the last term
 				response( $.ui.autocomplete.filter(
 					GetSearchOptions(composedString, options.structure), searchString ) );
