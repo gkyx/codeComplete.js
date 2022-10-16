@@ -67,7 +67,7 @@
 		}
 	}
 
-	$.fn.completejs = function(options) {
+	$.fn.codeComplete = function(options) {
 		var targetInput = this[0];
 		var suggestionDropdownPosition;
 		this.autocomplete({
@@ -88,7 +88,7 @@
 				suggestionDropdownPosition = getCursorXY(targetInput, targetInput.selectionStart - actualSearchString.length);
 				
 				response( $.ui.autocomplete.filter(
-					GetSearchOptionsForCurrentSearchString(structuredSearchString, options.structure), actualSearchString ) );
+					GetSearchOptionsForCurrentSearchString(structuredSearchString, options.context), actualSearchString ) );
 			},
 			focus: function() {
 			  // prevent value inserted on focus
