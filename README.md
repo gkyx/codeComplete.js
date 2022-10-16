@@ -1,2 +1,2 @@
-# completejs
-Javascript library that provides auto-completion similar to IDEs
+# codeComplete.js
+Javascript library to allow intellisense like code completion.
