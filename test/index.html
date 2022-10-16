@@ -7,12 +7,19 @@
 <body>
     <textarea name="testInput" id="testInput" style="width: 1000px;height: 600px; top: 100px; position: relative;"></textarea>
     <script>
+        var composition = ["Model", "Expression", "VideoRecorder"];
+        var system = {
+            "Composition": composition,
+            "Composition2": composition,
+            "Composition3": composition
+        }
+        var structure = {
+            "System": system,
+            "System2": system
+        }
+        
         var options = {
-            structure: {
-                "System": {
-                    "Composition": ["Model", "Expression", "VideoRecorder"]
-                }
-            }
+            structure: structure
         }
         $("#testInput").completejs(options);
     </script>

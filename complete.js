@@ -1,81 +1,41 @@
 (function ( $ ) {
-	function GetSearchOptions(composedString, dataStructure) {
-	  var parts = composedString.split('.');
+	function GetSearchOptionsForCurrentSearchString(structuredSearchString, dataStructure) {
+	  var searchStringParts = structuredSearchString.split('.');
 
-	  var nextObj = dataStructure;
-	  for (let index = 0; index < parts.length - 1; index++) {
-		nextObj = nextObj[parts[index]];
-		if(nextObj === undefined) return [];
+	  var parentOfSearchString = dataStructure;
+	  for (let index = 0; index < searchStringParts.length - 1; index++) {
+		parentOfSearchString = parentOfSearchString[searchStringParts[index]];
+		if(parentOfSearchString === undefined) return [];
 	  }
-	  return Array.isArray(nextObj) ? nextObj : Object.keys(nextObj);
+	  return Array.isArray(parentOfSearchString) ? parentOfSearchString : Object.keys(parentOfSearchString);
 	}
-
-	function ExtractStructureFromInput(inputElement){
-		var inputValue = inputElement.value.replaceAll('\n', ' ').replaceAll('\t', ' ');
-		var beforeDot = inputValue.substr(0, inputElement.selectionStart);
-		var beforeDotArr = beforeDot.split(' ');
-		var composedString = beforeDotArr[beforeDotArr.length - 1];
-
+	
+	function ExtractActualSearchString(composedString) {
 		var parts = composedString.split('.');
 		var searchString = parts[parts.length - 1];
-		return [composedString, searchString];
+		return searchString;
 	}
 
-	$.fn.completejs = function(options) {
-		var targetInput = this[0];
-		var cursorPosition;
-		this.autocomplete({
-			minLength: 0,
-			delay: options.delay ?? 0,
-			autoFocus: true,
-			source: function( request, response ) {
-				var [composedString, searchString] = ExtractStructureFromInput(targetInput);
-				if(composedString === "") {
-					$(targetInput).autocomplete("close");
-					return;
-				} // Avoid showing the suggested values if no character is entered yet. Close the dropdown if it was already opened.
+	function ExtractStructuredSearchString(inputElement){
+		var inputValue = inputElement.value.replaceAll('\n', ' ').replaceAll('\t', ' ');
+		var stringBeforeCursor = inputValue.substr(0, inputElement.selectionStart);
+		var stringsBeforeCursor = stringBeforeCursor.split(' ');
+		var structuredSearchString = stringsBeforeCursor[stringsBeforeCursor.length - 1];
 
-				cursorPosition = getCursorXY(targetInput, targetInput.selectionStart - searchString.length);
-				
-				// delegate back to autocomplete, but extract the last term
-				response( $.ui.autocomplete.filter(
-					GetSearchOptions(composedString, options.structure), searchString ) );
-			},
-			focus: function() {
-			  // prevent value inserted on focus
-			  return false;
-			},
-			select: function( event, ui ) {
-				var [_, searchString] = ExtractStructureFromInput(targetInput);
-			  
-				var restOfTheString = this.value.substr(targetInput.selectionStart);
-				var firstPartOfTheString = this.value.substr(0, targetInput.selectionStart - searchString.length);
-
-				this.value = firstPartOfTheString + ui.item.value + restOfTheString;
-				this.selectionEnd = firstPartOfTheString.length + ui.item.value.length;
-				return false;
-			},
-			open: function(event, ui) {
-				var autocomplete = $(".ui-autocomplete");
-				
-				autocomplete.css("top", `calc(${cursorPosition.y}px + ${autocomplete.css('fontSize')})`);
-				autocomplete.css("left", cursorPosition.x);
-				autocomplete.css("width", 'auto');
-			}
-		  });
-	};
+		return structuredSearchString;
+	}
 
 	const getCursorXY = (input, selectionPoint) => {
 		const {
-		  offsetLeft: inputX,
-		  offsetTop: inputY,
+			offsetLeft: inputX,
+			offsetTop: inputY,
 		} = input
 		// create a dummy element that will be a clone of our input
 		const div = document.createElement('div')
 		// get the computed style of the input and clone it onto the dummy element
 		const copyStyle = getComputedStyle(input)
 		for (const prop of copyStyle) {
-		  div.style[prop] = copyStyle[prop]
+			div.style[prop] = copyStyle[prop]
 		}
 		// we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
 		const swap = '.'
@@ -102,8 +62,56 @@
 		document.body.removeChild(div)
 		// return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
 		return {
-		  x: inputX + spanX,
-		  y: inputY + spanY,
+			x: inputX + spanX,
+			y: inputY + spanY,
 		}
-	  }
+	}
+
+	$.fn.completejs = function(options) {
+		var targetInput = this[0];
+		var suggestionDropdownPosition;
+		this.autocomplete({
+			minLength: 0,
+			delay: options.delay ?? 0,
+			autoFocus: true,
+			source: function( request, response ) {
+				var structuredSearchString = ExtractStructuredSearchString(targetInput);
+				var actualSearchString = ExtractActualSearchString(structuredSearchString);
+				
+				// Suggested values should not be shown until a character is entered.
+				// minLength option of autocomplete does not work since it considers the whole input field value.
+				if(structuredSearchString === "") {
+					$(targetInput).autocomplete("close");
+					return;
+				}
+
+				suggestionDropdownPosition = getCursorXY(targetInput, targetInput.selectionStart - actualSearchString.length);
+				
+				response( $.ui.autocomplete.filter(
+					GetSearchOptionsForCurrentSearchString(structuredSearchString, options.structure), actualSearchString ) );
+			},
+			focus: function() {
+			  // prevent value inserted on focus
+			  return false;
+			},
+			select: function( event, ui ) {
+				var structuredSearchString = ExtractStructuredSearchString(targetInput);
+				var actualSearchString = ExtractActualSearchString(structuredSearchString);
+			  
+				var restOfTheString = this.value.substr(targetInput.selectionStart);
+				var firstPartOfTheString = this.value.substr(0, targetInput.selectionStart - actualSearchString.length);
+
+				this.value = firstPartOfTheString + ui.item.value + restOfTheString;
+				this.selectionEnd = firstPartOfTheString.length + ui.item.value.length;
+				return false;
+			},
+			open: function(event, ui) {
+				var autocomplete = $(".ui-autocomplete");
+				
+				autocomplete.css("top", `calc(${suggestionDropdownPosition.y}px + ${autocomplete.css('fontSize')})`);
+				autocomplete.css("left", suggestionDropdownPosition.x);
+				autocomplete.css("width", 'auto');
+			}
+		  });
+	};
 }( jQuery ));
