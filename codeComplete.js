@@ -25,6 +25,7 @@
 		return structuredSearchString;
 	}
 
+	// From https://gist.github.com/jh3y/6c066cea00216e3ac860d905733e65c7
 	const getCursorXY = (input, selectionPoint) => {
 		const {
 			offsetLeft: inputX,
@@ -59,7 +60,7 @@
 		const { offsetLeft: spanX, offsetTop: spanY } = span
 		// lastly, remove that dummy element
 		// NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
-		document.body.removeChild(div)
+		//document.body.removeChild(div)
 		// return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
 		return {
 			x: inputX + spanX,
