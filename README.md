@@ -1,5 +1,6 @@
 # codeComplete.js
-Javascript library to allow intellisense like code completion.
+jQuery-ui plugin to allow intellisense like code completion.
+jQuery-ui is a prerequisite for this library.
 
 ### Usage
 ```
